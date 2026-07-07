@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>在 iPhone/iPad 安装 双轨 SPLIT</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  background:#08080e;
+  color:#c0c0dd;
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  min-height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  padding:20px;
+}
+.container{max-width:500px;width:100%}
+h1{
+  font-size:24px;
+  text-align:center;
+  color:#e0e0ff;
+  margin-bottom:8px;
+}
+.subtitle{
+  text-align:center;
+  color:#8080aa;
+  margin-bottom:30px;
+  font-size:14px;
+}
+.step{
+  background:rgba(255,255,255,0.04);
+  border:1px solid rgba(255,255,255,0.08);
+  border-radius:12px;
+  padding:16px;
+  margin-bottom:12px;
+  display:flex;
+  align-items:flex-start;
+  gap:12px;
+}
+.step-num{
+  background:linear-gradient(135deg,#00c8c8,#e63078);
+  color:#fff;
+  width:28px;height:28px;
+  border-radius:14px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:14px;
+  font-weight:700;
+  flex-shrink:0;
+}
+.step-content{flex:1}
+.step-content strong{
+  color:#e0e0ff;
+  display:block;
+  margin-bottom:4px;
+  font-size:15px;
+}
+.step-content p{
+  color:#8080aa;
+  font-size:13px;
+  line-height:1.5;
+}
+.step-content p i{
+  color:#00c8c8;
+  font-style:normal;
+}
+.icon-row{
+  display:flex;
+  justify-content:center;
+  gap:16px;
+  margin:20px 0;
+}
+.icon-box{
+  background:rgba(255,255,255,0.05);
+  border-radius:8px;
+  padding:10px;
+  text-align:center;
+}
+.icon-box img{width:48px;height:48px;border-radius:10px}
+.icon-box div{margin-top:4px;font-size:10px;color:#8080aa}
+.btn{
+  display:block;
+  width:100%;
+  padding:16px;
+  border:2px solid #00c8c8;
+  border-radius:12px;
+  background:linear-gradient(135deg,rgba(0,200,200,0.15),rgba(230,48,120,0.15));
+  color:#e0e0ff;
+  font-size:16px;
+  font-weight:600;
+  text-decoration:none;
+  text-align:center;
+  margin-top:20px;
+  transition:all 0.3s;
+}
+.btn:hover,.btn:active{
+  background:linear-gradient(135deg,rgba(0,200,200,0.25),rgba(230,48,120,0.25));
+  transform:scale(1.02);
+}
+.note{
+  text-align:center;
+  color:#606080;
+  font-size:12px;
+  margin-top:16px;
+  line-height:1.6;
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>双轨 SPLIT</h1>
+  <p class="subtitle">在 iPhone/iPad 上安装到主屏幕</p>
+  
+  <div class="icon-row">
+    <div class="icon-box">
+      <img src="assets/icon-180.png" alt="双轨图标">
+      <div>游戏图标</div>
+    </div>
+    <div class="icon-box" style="font-size:28px;padding:16px 10px;color:#8080aa">
+      <div>→</div>
+      <div style="font-size:10px;margin-top:2px">&nbsp;</div>
+    </div>
+    <div class="icon-box">
+      <div style="width:48px;height:48px;border-radius:10px;background:#1a1a2e;display:flex;align-items:center;justify-content:center;font-size:22px">🏠</div>
+      <div>主屏幕</div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-content">
+      <strong>打开游戏</strong>
+      <p>在 Safari 中打开 <i>alexanderxt.github.io/split-game</i></p>
+    </div>
+  </div>
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-content">
+      <strong>点击分享按钮</strong>
+      <p>点底部工具栏的 <span style="color:#e0e0ff">□↑</span> 分享图标（或顶部 Safari 菜单中的分享）</p>
+    </div>
+  </div>
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-content">
+      <strong>选择"添加到主屏幕"</strong>
+      <p>向下滚动找到 <span style="color:#e0e0ff">「添加到主屏幕」</span>（Add to Home Screen）</p>
+    </div>
+  </div>
+  <div class="step">
+    <div class="step-num">4</div>
+    <div class="step-content">
+      <strong>确认安装</strong>
+      <p>点击右上角"添加"，图标就会出现在主屏幕上，之后可以像原生 App 一样离线使用</p>
+    </div>
+  </div>
+
+  <a class="btn" href="index.html">开始游戏 →</a>
+  
+  <p class="note">
+    iOS 14.5+ 支持 PWA 推送通知<br>
+    游戏运行时无任何广告和第三方追踪
+  </p>
+</div>
+</body>
+</html>
