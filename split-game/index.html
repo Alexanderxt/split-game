@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="assets/icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="双轨SPLIT">
+<link rel="icon" type="image/png" href="assets/favicon.png" sizes="48x48">
+<title>双轨 SPLIT</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  background:#08080e;
+  color:#ccc;
+  font-family:-apple-system,'Segoe UI',system-ui,sans-serif;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  min-height:100vh;
+  overflow:hidden;
+  user-select:none;
+  -webkit-user-select:none;
+}
+#game-container{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:10px;
+  padding:12px;
+  max-width:100%;
+}
+#header{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  width:100%;
+  justify-content:center;
+  flex-wrap:wrap;
+}
+#header h1{
+  font-size:17px;
+  font-weight:600;
+  letter-spacing:3px;
+  background:linear-gradient(135deg,#4fc3f7,#f06292);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+#header .info{font-size:12px;color:#666;letter-spacing:0.5px}
+#header .info em{color:#888;font-style:normal}
+#controls{
+  display:flex;
+  gap:6px;
+  flex-wrap:wrap;
+  justify-content:center;
+}
+#controls button{
+  background:#14141e;
+  border:1px solid #2a2a3a;
+  color:#777;
+  padding:5px 12px;
+  border-radius:5px;
+  cursor:pointer;
+  font-size:11px;
+  transition:.12s;
+  letter-spacing:0.3px;
+}
+#controls button:hover{background:#1e1e2e;color:#bbb;border-color:#444}
+#controls button:active{background:#2a2a3a}
+#controls button.accent{
+  background:#4fc3f718;
+  border-color:#4fc3f744;
+  color:#4fc3f7;
+}
+#controls button.accent:hover{background:#4fc3f730}
+canvas{
+  border-radius:6px;
+  display:block;
+  max-width:100%;
+  height:auto;
+  cursor:pointer;
+  touch-action:none;
+}
+#footer{font-size:10px;color:#333;letter-spacing:1px;margin-top:2px}
+
+#level-select{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:#08080ef2;
+  z-index:100;
+  justify-content:center;
+  align-items:center;
+  flex-direction:column;
+  gap:14px;
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+}
+#level-select.open{display:flex}
+#level-select h2{
+  font-size:20px;
+  background:linear-gradient(135deg,#4fc3f7,#f06292);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+.level-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:8px;
+}
+.level-btn{
+  width:56px;height:56px;
+  border-radius:8px;
+  border:1px solid #2a2a3a;
+  background:#12121c;
+  color:#555;
+  font-size:14px;
+  cursor:pointer;
+  transition:.12s;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  line-height:1.2;
+}
+.level-btn:hover{background:#1a1a28;border-color:#444;color:#888}
+.level-btn.done{border-color:#4fc3f744;color:#4fc3f788}
+.level-btn.now{border-color:#f0629266;color:#f06292;background:#f0629210}
+.level-btn .sub{font-size:8px;color:#555;margin-top:2px}
+#close-level-select{
+  margin-top:8px;
+  background:#14141e;
+  border:1px solid #2a2a3a;
+  color:#666;
+  padding:7px 22px;
+  border-radius:5px;
+  cursor:pointer;
+  font-size:12px;
+}
+#close-level-select:hover{color:#aaa;border-color:#444}
+
+#win-overlay{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:#08080ef2;
+  z-index:200;
+  justify-content:center;
+  align-items:center;
+  flex-direction:column;
+  gap:14px;
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+}
+#win-overlay.open{display:flex}
+#win-overlay h2{
+  font-size:26px;
+  background:linear-gradient(135deg,#4fc3f7,#f06292);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+#win-overlay .sub{color:#777;font-size:13px}
+#win-overlay .hint-text{color:#555;font-size:11px;max-width:260px;text-align:center}
+#win-overlay .btns{display:flex;gap:8px;margin-top:4px}
+#win-overlay button{
+  background:#4fc3f718;
+  border:1px solid #4fc3f744;
+  color:#4fc3f7;
+  padding:9px 24px;
+  border-radius:6px;
+  cursor:pointer;
+  font-size:13px;
+  transition:.12s;
+}
+#win-overlay button:hover{background:#4fc3f730}
+#win-overlay button.alt{background:#14141e;border-color:#2a2a3a;color:#888}
+#win-overlay button.alt:hover{color:#bbb;border-color:#444}
+
+#msg-toast{
+  position:fixed;
+  bottom:36px;
+  left:50%;
+  transform:translateX(-50%);
+  background:#141420;
+  border:1px solid #2a2a3a;
+  color:#999;
+  padding:7px 18px;
+  border-radius:6px;
+  font-size:12px;
+  opacity:0;
+  transition:opacity .25s;
+  pointer-events:none;
+  z-index:300;
+  white-space:nowrap;
+}
+#msg-toast.show{opacity:1}
+
+@media(max-width:500px){
+  #game-container{gap:8px;padding:8px}
+  #header h1{font-size:15px}
+  #header .info{font-size:10px}
+  #controls button{padding:4px 10px;font-size:10px}
+  .level-btn{width:48px;height:48px;font-size:12px}
+  #win-overlay h2{font-size:22px}
+}
+</style>
+</head>
+<body>
+
+<div id="game-container">
+  <div id="header">
+    <h1>双轨 SPLIT</h1>
+    <div class="info">关卡 <em id="lvl-num">1</em>/<em id="lvl-total">50</em> &middot; 步数 <em id="mv-count">0</em></div>
+    <div id="controls">
+      <button id="btn-undo">⟲ 撤销</button>
+      <button id="btn-reset">↺ 重置</button>
+      <button id="btn-hint">? 提示</button><button id="btn-bgm" onclick="toggleBgm()" title="背景音乐">♫</button>
+      <button id="btn-rank" class="accent">☰ 排行</button><button id="btn-levels" class="accent">⊕ 选关</button>
+    </div>
+  </div>
+  <canvas id="gc"></canvas>
+  <div id="footer">⌨ WASD / 方向键 &middot; 点击画布边缘移动</div>
+</div>
+
+<div id="level-select">
+  <h2>选择关卡</h2>
+  <div class="level-grid" id="lvl-grid"></div>
+  <button id="cls-lvl">返回</button>
+</div>
+
+<div id="win-overlay">
+  <h2>✦ 通关 ✦</h2>
+  <div class="sub" id="win-stats"></div>
+  <div class="hint-text" id="win-hint"></div>
+  <div class="btns">
+    <button id="btn-next">下一关 →</button>
+    <button id="btn-list" class="alt">选关</button>
+    <button id="btn-copy-code" class="share-btn">复制分享码</button>
+  </div>
+</div>
+
+
+<!-- ===== RANKING PANEL ===== -->
+<div id="rank-overlay">
+  <h2>排行榜</h2>
+  <div class="rank-tabs">
+    <button class="rank-tab active" data-tab="self">我的成绩</button>
+    <button class="rank-tab" data-tab="friend">朋友成绩</button>
+  </div>
+  <div class="rank-scroll">
+    <table id="rank-table">
+      <thead><tr><th>关卡</th><th>描述</th><th class="r-num">好友</th><th class="r-num">我的</th></tr></thead>
+      <tbody id="rank-body"></tbody>
+    </table>
+  </div>
+  <div class="rank-actions">
+    <button id="btn-import-rank">导入分享码</button>
+    <button id="btn-clear-friend" class="alt">清除朋友数据</button>
+  </div>
+  <button id="cls-rank">关闭</button>
+</div>
+
+<!-- ===== IMPORT MODAL ===== -->
+<div id="import-overlay">
+  <h2>导入分享码</h2>
+  <p class="import-desc">粘贴朋友发给你的分享码，导入对方的通关记录到排行榜。</p>
+  <textarea id="import-code" rows="3" placeholder="粘贴分享码..."></textarea>
+  <div class="btns">
+    <button id="btn-do-import">导入</button>
+    <button id="btn-cancel-import" class="alt">取消</button>
+  </div>
+  <div id="import-result"></div>
+</div>
+
+<style>
+#rank-overlay, #import-overlay {
+  display:none; position:fixed; inset:0; background:rgba(8,8,14,.94);
+  z-index:100; flex-direction:column; align-items:center; padding:30px 16px; overflow-y:auto;
+}
+#rank-overlay.open, #import-overlay.open { display:flex; }
+#rank-overlay h2, #import-overlay h2 {
+  font-size:15px; font-weight:600; letter-spacing:2px; color:#aaa; margin-bottom:14px;
+}
+.rank-tabs { display:flex; gap:6px; margin-bottom:16px; }
+.rank-tab {
+  background:#14141e; border:1px solid #2a2a3a; color:#666; padding:5px 18px;
+  border-radius:5px; cursor:pointer; font-size:11px; transition:.12s;
+}
+.rank-tab.active { background:#4fc3f718; border-color:#4fc3f744; color:#4fc3f7; }
+.rank-tab:hover { border-color:#444; color:#bbb; }
+.rank-scroll { max-height:60vh; overflow-y:auto; width:100%; max-width:500px; margin-bottom:14px; }
+#rank-table { width:100%; border-collapse:collapse; font-size:11px; }
+#rank-table th { color:#555; font-weight:500; padding:5px 8px; text-align:left; border-bottom:1px solid #1a1a2a; position:sticky; top:0; background:#0b0b14; }
+#rank-table td { padding:4px 8px; border-bottom:1px solid #14141e; color:#888; }
+#rank-table .r-num { text-align:right; width:48px; }
+#rank-table tr:hover td { background:#11111c; }
+#rank-table .name-col { color:#666; font-size:10px; }
+#rank-table .beat { color:#4fc3f7; font-weight:600; }
+#rank-table .tie { color:#f0c040; }
+#rank-table .slower { color:#f06292; }
+.rank-actions { display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap; justify-content:center; }
+.import-desc { color:#666; font-size:11px; max-width:400px; text-align:center; margin-bottom:12px; line-height:1.5; }
+#import-code {
+  width:100%; max-width:380px; background:#11111c; border:1px solid #2a2a3a; color:#ccc;
+  padding:10px; border-radius:5px; font-size:11px; resize:none; font-family:monospace;
+}
+#import-result { margin-top:10px; font-size:11px; min-height:20px; }
+#import-result.ok { color:#4fc3f7; }
+#import-result.err { color:#f06292; }
+#rank-overlay .alt, #import-overlay .alt { background:#14141e; border-color:#2a2a3a; color:#666; }
+#rank-overlay .alt:hover, #import-overlay .alt:hover { border-color:#444; color:#bbb; }
+#btn-copy-code {
+  background:#14141e; border:1px solid #2a2a3a; color:#888; padding:6px 14px;
+  border-radius:5px; cursor:pointer; font-size:11px; transition:.12s; margin-top:6px;
+}
+#btn-copy-code:hover { background:#1e1e2e; color:#bbb; border-color:#444; }
+#btn-copy-code.copied { background:#4fc3f718; border-color:#4fc3f744; color:#4fc3f7; }
+#btn-copy-code.share-btn { margin-top:10px; }
+</style>
+<div id="msg-toast"></div>
+
+<script>
+// ===== LEVELS (all verified solvable via BFS) =====
+
+const LV = [
+  {w:4,h:1,g1:[[4, 0, 0, 2]],g2:[[5, 0, 0, 3]],desc:'一起向右移动三次'},
+  {w:3,h:3,g1:[[4, 0, 1], [0, 0, 1], [0, 0, 2]],g2:[[5, 0, 0], [1, 0, 0], [1, 0, 3]],desc:'路径不同但操作相同'},
+  {w:4,h:3,g1:[[4, 0, 1, 1], [0, 0, 0, 1], [1, 0, 0, 2]],g2:[[5, 0, 0, 0], [0, 0, 0, 0], [1, 1, 0, 3]],desc:'看似不同的迷宫，却有相同的解法'},
+  {w:5,h:3,g1:[[4, 0, 0, 1, 1], [1, 1, 0, 0, 1], [1, 1, 1, 0, 2]],g2:[[5, 0, 0, 0, 0], [1, 0, 0, 1, 0], [0, 0, 0, 0, 3]],desc:'路径越长，思考越深'},
+  {w:4,h:4,g1:[[4, 0, 1, 1], [0, 0, 1, 1], [0, 0, 0, 1], [1, 0, 0, 2]],g2:[[5, 0, 0, 0], [0, 0, 0, 1], [0, 0, 0, 1], [1, 0, 0, 3]],desc:'蜿蜒曲折的路径'},
+  {w:5,h:4,g1:[[4, 0, 0, 0, 1], [1, 1, 0, 0, 1], [1, 0, 0, 0, 1], [1, 0, 0, 0, 2]],g2:[[5, 0, 0, 0, 0], [0, 0, 0, 0, 0], [1, 1, 1, 0, 0], [1, 1, 1, 0, 3]],desc:'两个球走过完全不同的路'},
+  {w:5,h:5,g1:[[4, 0, 0, 0, 1], [0, 1, 0, 0, 1], [0, 0, 0, 1, 1], [1, 0, 0, 0, 1], [1, 0, 0, 0, 2]],g2:[[5, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 1, 1, 0, 0], [0, 0, 0, 0, 0], [1, 1, 0, 0, 3]],desc:'复杂度升级'},
+  {w:6,h:5,g1:[[4, 0, 0, 0, 1, 1], [0, 0, 0, 0, 1, 1], [0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 2]],g2:[[5, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0], [1, 1, 1, 1, 0, 0], [1, 1, 0, 0, 0, 0], [1, 1, 0, 0, 0, 3]],desc:'终局之战'},
+  {w:3,h:3,g1:[[0, 0, 0], [0, 0, 0], [4, 2, 0]],g2:[[0, 3, 5], [0, 0, 0], [0, 0, 0]],desc:'初识迷宫'},
+  {w:3,h:3,g1:[[4, 0, 0], [0, 1, 0], [0, 0, 2]],g2:[[0, 0, 0], [5, 0, 1], [3, 0, 0]],desc:'双轨并行'},
+  {w:4,h:3,g1:[[2, 1, 0, 0], [0, 0, 0, 0], [1, 0, 4, 0]],g2:[[0, 0, 3, 0], [5, 1, 0, 1], [0, 0, 0, 0]],desc:'简单障碍'},
+  {w:4,h:3,g1:[[0, 0, 2, 0], [4, 1, 0, 1], [0, 0, 0, 0]],g2:[[0, 1, 0, 0], [0, 0, 1, 0], [3, 5, 0, 0]],desc:'交错之路'},
+  {w:4,h:4,g1:[[0, 0, 0, 2], [0, 1, 1, 0], [0, 0, 1, 0], [0, 0, 4, 0]],g2:[[0, 0, 0, 0], [1, 0, 0, 3], [0, 0, 0, 1], [1, 0, 0, 5]],desc:'迂回前进'},
+  {w:4,h:4,g1:[[0, 0, 0, 0], [0, 0, 0, 1], [0, 2, 4, 0], [0, 0, 0, 0]],g2:[[0, 0, 0, 0], [0, 3, 0, 0], [0, 0, 0, 0], [5, 1, 0, 0]],desc:'折返路线'},
+  {w:5,h:4,g1:[[0, 0, 0, 4, 0], [0, 1, 0, 0, 0], [0, 0, 2, 0, 0], [0, 0, 0, 0, 0]],g2:[[0, 0, 0, 0, 0], [5, 0, 0, 0, 0], [0, 0, 0, 0, 1], [0, 0, 0, 0, 3]],desc:'空间思维'},
+  {w:5,h:4,g1:[[0, 0, 0, 0, 0], [1, 1, 0, 0, 0], [4, 0, 0, 0, 0], [0, 2, 0, 0, 0]],g2:[[0, 0, 1, 0, 0], [0, 0, 3, 0, 0], [0, 0, 1, 0, 0], [5, 0, 0, 0, 0]],desc:'分岔路口'},
+  {w:5,h:5,g1:[[4, 0, 0, 0, 0], [1, 0, 0, 0, 0], [0, 0, 1, 2, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]],g2:[[0, 0, 3, 0, 0], [0, 5, 0, 0, 0], [1, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 1, 0]],desc:'镜面迷宫'},
+  {w:5,h:5,g1:[[2, 1, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 4, 0, 0, 0], [0, 0, 0, 0, 0]],g2:[[0, 0, 0, 0, 0], [0, 0, 0, 5, 3], [0, 0, 0, 0, 0], [0, 0, 1, 0, 0], [0, 0, 0, 0, 0]],desc:'异曲同工'},
+  {w:5,h:5,g1:[[0, 2, 0, 0, 1], [0, 1, 0, 0, 4], [0, 0, 0, 1, 0], [0, 1, 1, 0, 0], [0, 1, 0, 0, 0]],g2:[[5, 0, 0, 1, 0], [1, 0, 0, 1, 0], [0, 0, 1, 0, 0], [0, 0, 0, 0, 1], [3, 0, 1, 0, 0]],desc:'螺旋思路'},
+  {w:6,h:5,g1:[[0, 0, 0, 0, 0, 0], [0, 2, 0, 0, 1, 0], [0, 0, 0, 0, 0, 0], [1, 1, 1, 0, 0, 4], [0, 0, 0, 0, 0, 1]],g2:[[0, 0, 0, 1, 0, 0], [1, 0, 0, 0, 0, 5], [0, 0, 0, 0, 3, 0], [0, 0, 0, 1, 1, 0], [0, 0, 0, 1, 0, 0]],desc:'视野之外'},
+  {w:6,h:5,g1:[[0, 0, 0, 0, 0, 0], [0, 1, 0, 0, 0, 0], [0, 0, 4, 0, 0, 0], [0, 0, 0, 2, 0, 0], [1, 0, 0, 0, 0, 0]],g2:[[0, 0, 0, 0, 0, 0], [0, 0, 1, 0, 0, 0], [0, 1, 0, 0, 0, 0], [3, 0, 0, 0, 0, 0], [0, 0, 0, 0, 5, 0]],desc:'广阔空间'},
+  {w:6,h:6,g1:[[4, 0, 0, 0, 0, 0], [0, 0, 0, 0, 1, 0], [0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0], [0, 0, 0, 2, 0, 0], [0, 0, 0, 0, 0, 0]],g2:[[0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0], [0, 0, 5, 0, 0, 0], [3, 0, 0, 0, 0, 0], [0, 0, 1, 0, 0, 0]],desc:'渐入佳境'},
+  {w:6,h:6,g1:[[0, 0, 0, 0, 0, 0], [0, 0, 2, 0, 1, 0], [0, 1, 0, 0, 0, 0], [0, 0, 0, 0, 4, 0], [0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0]],g2:[[0, 0, 0, 0, 0, 3], [0, 0, 0, 1, 0, 0], [0, 0, 5, 0, 0, 0], [0, 0, 0, 0, 0, 0], [0, 1, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0]],desc:'心领神会'},
+  {w:6,h:6,g1:[[0, 0, 0, 0, 0, 0], [4, 0, 1, 0, 0, 0], [0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0], [0, 0, 0, 2, 0, 0], [0, 0, 0, 0, 0, 0]],g2:[[0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0], [0, 5, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0], [3, 0, 0, 0, 0, 0], [0, 0, 1, 0, 0, 0]],desc:'同步思考'},
+  {w:6,h:7,g1:[[0, 0, 1, 0, 0, 0], [2, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0], [0, 1, 0, 0, 4, 0], [0, 0, 0, 0, 1, 0]],g2:[[0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 1, 5], [0, 0, 0, 0, 0, 0], [1, 0, 0, 0, 3, 0], [1, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0]],desc:'分分合合'},
+  {w:6,h:7,g1:[[0, 0, 4, 0, 0, 0], [0, 0, 0, 0, 0, 0], [1, 2, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0]],g2:[[0, 0, 0, 0, 0, 0], [0, 3, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0], [1, 0, 0, 0, 5, 0], [0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0]],desc:'彼此呼应'},
+  {w:7,h:7,g1:[[1, 0, 2, 0, 1, 0, 1], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 1, 0, 1, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 1, 0, 1, 4, 1], [0, 1, 0, 0, 0, 0, 0]],g2:[[0, 0, 0, 0, 0, 1, 0], [0, 1, 0, 0, 0, 5, 0], [0, 0, 0, 0, 1, 0, 1], [0, 1, 0, 0, 0, 0, 0], [1, 1, 0, 0, 0, 0, 1], [0, 3, 0, 1, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0]],desc:'思维同频'},
+  {w:7,h:7,g1:[[0, 0, 2, 1, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 4, 1, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0]],g2:[[0, 5, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 3, 0, 0, 0], [0, 1, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 1, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0]],desc:'心有灵犀'},
+  {w:7,h:7,g1:[[0, 0, 0, 0, 0, 0, 0], [0, 0, 1, 0, 0, 0, 0], [0, 2, 0, 0, 0, 0, 0], [0, 4, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0]],g2:[[0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [3, 0, 0, 5, 0, 0, 1]],desc:'峰回路转'},
+  {w:7,h:7,g1:[[0, 0, 1, 0, 0, 0, 0], [1, 0, 0, 0, 0, 0, 1], [0, 1, 0, 4, 1, 0, 0], [0, 0, 1, 1, 0, 0, 0], [0, 1, 1, 0, 1, 0, 0], [1, 0, 0, 0, 0, 0, 0], [0, 0, 2, 0, 0, 0, 1]],g2:[[1, 5, 0, 0, 0, 0, 1], [0, 0, 0, 0, 1, 1, 0], [0, 0, 1, 0, 0, 0, 0], [0, 0, 0, 0, 0, 1, 0], [0, 0, 0, 1, 0, 0, 1], [0, 3, 1, 0, 1, 1, 0], [1, 0, 0, 0, 0, 0, 0]],desc:'柳暗花明'},
+  {w:8,h:7,g1:[[0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 4, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 1, 2], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 1, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0]],g2:[[0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 5, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [1, 0, 0, 0, 0, 0, 0, 0], [0, 3, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 1, 0, 0, 0, 0]],desc:'迷途知返'},
+  {w:8,h:7,g1:[[0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 1, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 4], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 2, 0, 0]],g2:[[0, 0, 0, 0, 0, 0, 0, 0], [5, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 3, 0], [1, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0]],desc:'曲径通幽'},
+  {w:8,h:7,g1:[[1, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 1], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 2, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [4, 0, 0, 0, 0, 0, 0, 0]],g2:[[0, 0, 5, 1, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 3], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 1, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0]],desc:'智慧之墙'},
+  {w:8,h:8,g1:[[0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [1, 0, 0, 0, 0, 0, 0, 2], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 4, 0, 0, 0, 0, 0, 0]],g2:[[0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 1, 0, 0, 0, 0, 0], [0, 0, 0, 3, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 5, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0]],desc:'空旷战场'},
+  {w:8,h:8,g1:[[0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 2, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 4, 0, 0, 0, 0, 0, 0], [0, 0, 0, 1, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0]],g2:[[0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 5, 0, 0, 0, 1, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 3, 0], [0, 0, 0, 0, 0, 0, 0, 0]],desc:'互相照应'},
+  {w:8,h:8,g1:[[0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 4, 0, 0, 0, 0, 0, 1], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 2, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0]],g2:[[0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 1, 0, 0, 0, 5], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 3, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0]],desc:'稳步前进'},
+  {w:8,h:8,g1:[[4, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 1, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 2, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 1, 0]],g2:[[0, 0, 0, 1, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 3, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 5, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 1], [0, 0, 0, 0, 0, 0, 0, 0]],desc:'登高望远'},
+  {w:8,h:9,g1:[[2, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 1, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 4, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 1, 0, 0]],g2:[[0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [5, 0, 0, 0, 3, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 1, 0, 0, 0, 0, 0, 0], [0, 1, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0]],desc:'山重水复'},
+  {w:8,h:9,g1:[[0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 2, 0, 0, 0, 0, 0], [4, 1, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0]],g2:[[0, 0, 0, 0, 0, 0, 0, 0], [0, 1, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 5], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 3, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0]],desc:'全局思考'},
+  {w:9,h:9,g1:[[0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 2, 0, 0, 0], [0, 0, 0, 4, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0]],g2:[[5, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 3, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0]],desc:'深思熟虑'},
+  {w:9,h:9,g1:[[0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 2, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 1, 1], [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 4, 0]],g2:[[0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 3, 0, 0], [0, 1, 0, 0, 0, 0, 0, 0, 0], [0, 0, 5, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 1, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0]],desc:'迷雾重重'},
+  {w:9,h:9,g1:[[0, 4, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 1, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 2, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0]],g2:[[0, 0, 0, 0, 0, 0, 0, 1, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 5, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 3, 0, 0, 0]],desc:'迷宫深处'},
+  {w:9,h:9,g1:[[0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 1, 0, 0, 0, 0, 0, 0, 0], [1, 0, 0, 1, 0, 0, 0, 0, 0], [2, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 4, 0, 0, 0, 0]],g2:[[0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 5, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 3, 1], [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 1, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 1, 0, 0, 0, 0, 0, 0]],desc:'柳暗花明二'},
+  {w:10,h:10,g1:[[0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 1, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 1, 0, 0, 0], [0, 2, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 1, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 4]],g2:[[0, 0, 0, 0, 0, 0, 3, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0], [5, 0, 0, 0, 1, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]],desc:'九宫之路'},
+  {w:10,h:10,g1:[[0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 1, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 4], [0, 0, 0, 0, 0, 0, 0, 0, 0, 2]],g2:[[0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 1, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 3, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 5, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]],desc:'旷野追踪'},
+  {w:10,h:10,g1:[[0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 1, 0, 4, 0, 0, 0, 0, 0], [0, 0, 0, 0, 2, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 1, 1, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]],g2:[[0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 1, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 5, 0, 0, 0, 1, 0, 0, 0], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 3], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]],desc:'一望无际'},
+  {w:10,h:10,g1:[[0, 0, 0, 0, 1, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 1, 0], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [4, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 1, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 1, 0, 0, 0], [0, 0, 1, 0, 0, 0, 0, 2, 0, 0]],g2:[[0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [3, 0, 0, 0, 0, 0, 0, 1, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 1, 0, 0, 0, 1, 0, 0], [0, 0, 0, 0, 5, 0, 0, 0, 0, 0], [0, 0, 1, 0, 0, 0, 0, 1, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 1, 0, 0, 0, 0, 0, 0, 1], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]],desc:'追求卓越'},
+  {w:10,h:10,g1:[[0, 0, 0, 0, 4, 0, 0, 0, 0, 0], [2, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 1, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 1, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]],g2:[[0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 1, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 1, 0, 0, 0, 0, 0, 0], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 3], [5, 0, 0, 0, 0, 1, 0, 0, 0, 0]],desc:'挑战极限'},
+  {w:10,h:10,g1:[[0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 1, 0, 0, 0, 0, 0, 0, 0, 0], [0, 1, 1, 1, 0, 0, 0, 0, 0, 4], [0, 0, 0, 1, 0, 0, 0, 0, 0, 0], [0, 0, 0, 1, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 1, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 1, 0, 0, 0, 0, 2, 0, 0]],g2:[[1, 0, 0, 0, 0, 5, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 3, 0, 0], [0, 0, 1, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 1, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 1, 0, 0], [0, 0, 0, 0, 0, 0, 1, 0, 0, 0], [0, 0, 0, 0, 1, 0, 0, 0, 1, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]],desc:'终极迷宫'},
+  {w:10,h:10,g1:[[0, 0, 0, 0, 0, 0, 0, 1, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 4, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 1, 0, 0, 0, 0, 0, 0], [0, 0, 0, 1, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 2]],g2:[[0, 0, 0, 0, 0, 0, 3, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 5, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 1, 0, 0], [0, 0, 0, 0, 0, 0, 1, 0, 1, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]],desc:'终章：双轨合一'}
+];
+
+const SOLS = [
+  '→→→',
+  '→↓↓→',
+  '↓→→↓→',
+  '→↓→↓→↓→',
+  '↓↓→↓→→',
+  '→→↓→↓↓→',
+  '↓↓↓→↓→↓→→',
+  '↓↓→→→→↓↓↓→',
+  '←←→',
+  '→→↓←↓',
+  '↑←←↑→→',
+  '↑→→→↓←',
+  '→↑←↑↑→',
+  '↑←←→↓↓↑',
+  '←←←↓→→↓→→',
+  '↑↑→→↓→↑←↓←',
+  '↑←→↓←↓↓→→↑',
+  '↓↓↓←↑→↑←↑↑→',
+  '←↑→↓↓←↑←↓↓',
+  '↓↓↓↑←←←↑←',
+  '↑←←←↓←↑↑→→↓',
+  '↓↓↓↓←↓→→→→↑←',
+  '↑↑→→↓←←←←→↑↑',
+  '↓↓↓↓→→→→↑←',
+  '↓↑←←←↓←↑↑↑↑↓',
+  '↓↓↓←←↑↑↑↑←←→↑',
+  '↑←↑←↑←↓↓↓↓↓←↑↑',
+  '↑→↓↓↓↓↓↑↑←↑→',
+  '↑↑↑→↓→↓←←←↓←←',
+  '↑→→↓↓↓↓↓→←←↓←↓',
+  '→→→→↓↓→↓←←←←←←',
+  '↑←←←←↑→→→→↓↓↓↓→→',
+  '↓↓↓→→→↓←←↑↑→→',
+  '↑↑←↑←←→↑↑→→→→↓→→',
+  '↓→→→→→←↑↑↑↑↑↑↓→',
+  '↑←←←←↓←↓→→→↓↓→→→',
+  '↓↓↓↓←←←→→↑↑↑↑↑↑↑↓↓',
+  '↑↑↑←↑→→→→→↑→↓↓↓↑←←',
+  '←←←←←←↑→↓↓↓↓→',
+  '↑↑↑↑↓↓↓←←←→→→→→',
+  '↓↓→→→→→→↑←←←←←↑↑↑←←',
+  '↓↓→→→→→→↓←←↓↓←',
+  '↓↓↓→→→→→→↓←←←←←←←↑←↑',
+  '←←←←←←←→↑←↑→→→→→→↑←',
+  '↑↑↑↑↑←←←←↓↓↓→↓↓↓→→→→',
+  '↑←←↓↓←↓→→→→→↓→→→',
+  '←←↑→→→→→→→↓↓↓↓←↑↑↑↑→↑←←↓',
+  '↑→→→→→→↓←←←←←←←←←↓→→→↑',
+  '↓↓→↓↓↓→↓←←↑←←↑↑↓→→',
+  '↓↓↓→↓↓←←←←←↓←↑↑↑↑↑→→→→→→'
+];
+
+
+// ===== STATE =====
+let $ = id=>document.getElementById(id);
+let S = {lvl:0,moves:0,b1:{x:0,y:0},b2:{x:0,y:0},g1p:{x:0,y:0},g2p:{x:0,y:0},g1:[],g2:[],hist:[],done:new Set(),best:{},won:false};
+let canvas,ctx,cellSize,mw,mh;
+
+// ===== CORE =====
+function loadLevel(idx){
+  const lv=LV[idx]; S.lvl=idx; S.moves=0; S.hist=[]; S.won=false;
+  S.g1=lv.g1.map(r=>[...r]); S.g2=lv.g2.map(r=>[...r]);
+  for(let y=0;y<lv.h;y++) for(let x=0;x<lv.w;x++){
+    if(S.g1[y][x]===4){S.b1={x,y};S.g1[y][x]=0}
+    if(S.g1[y][x]===2){S.g1p={x,y};S.g1[y][x]=0}
+    if(S.g2[y][x]===5){S.b2={x,y};S.g2[y][x]=0}
+    if(S.g2[y][x]===3){S.g2p={x,y};S.g2[y][x]=0}
+  }
+  resize(); render(); uiUpd(); hideMsg();
+}
+
+const DX={up:0,down:0,left:-1,right:1}, DY={up:-1,down:1,left:0,right:0};
+function move(dir){
+  if(S.won) return;
+  const lv=LV[S.lvl],w=lv.w,h=lv.h;
+  const nx1=S.b1.x+DX[dir],ny1=S.b1.y+DY[dir];
+  const nx2=S.b2.x+DX[dir],ny2=S.b2.y+DY[dir];
+  const v1=nx1>=0&&nx1<w&&ny1>=0&&ny1<h&&S.g1[ny1][nx1]!==1;
+  const v2=nx2>=0&&nx2<w&&ny2>=0&&ny2<h&&S.g2[ny2][nx2]!==1;
+  if(!v1&&!v2){playBlockedSnd();showMsg('此方向不通');return}
+
+  playMoveSnd(); S.hist.push({b1:{...S.b1},b2:{...S.b2},mv:S.moves});
+  if(S.hist.length>200) S.hist.shift();
+
+  if(v1){S.b1.x=nx1;S.b1.y=ny1}
+  if(v2){S.b2.x=nx2;S.b2.y=ny2}
+  S.moves++;
+  uiUpd();render();
+
+  if(S.b1.x===S.g1p.x&&S.b1.y===S.g1p.y&&S.b2.x===S.g2p.x&&S.b2.y===S.g2p.y){
+    S.won=true; S.done.add(S.lvl);
+    const b=S.best[S.lvl]||Infinity; if(S.moves<b) S.best[S.lvl]=S.moves;
+    playWinSnd(); setTimeout(showWin,350);
+  }
+}
+
+function undo(){
+  if(!S.hist.length) return; playUndoSnd();
+  const p=S.hist.pop(); S.b1=p.b1; S.b2=p.b2; S.moves=p.mv; S.won=false;
+  uiUpd();render();hideMsg();
+}
+function resetLv(){loadLevel(S.lvl);updateBtns()}
+
+// ===== RENDER =====
+function resize(){
+  const lv=LV[S.lvl]; if(!lv) return;
+  const mw=Math.min(window.innerWidth-40,720);
+  cellSize=Math.max(26,Math.min(60,Math.floor((mw-40)/(lv.w*2+1))));
+  const cw=lv.w*cellSize, ch=lv.h*cellSize;
+  canvas.width=40+cw*2+12; canvas.height=40+ch+24;
+  canvas.style.width=canvas.width+'px'; canvas.style.height=canvas.height+'px';
+  window._csz=cellSize; window._cw=cw; window._ch=ch;
+}
+
+function render(){
+  const lv=LV[S.lvl]; if(!lv) return;
+  const cs=window._csz||40, cw=lv.w*cs, ch=lv.h*cs, ox=20, oy=20;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle='#0b0b14'; ctx.fillRect(0,0,canvas.width,canvas.height);
+
+  for(let mi=0;mi<2;mi++){
+    const g=mi===0?S.g1:S.g2, gp=mi===0?S.g1p:S.g2p, bp=mi===0?S.b1:S.b2;
+    const bx=ox+mi*(cw+12);
+
+    // Maze bg
+    ctx.fillStyle='#11111c';
+    ctx.beginPath(); roundRect(ctx,bx,oy,cw,ch,5); ctx.fill();
+
+    for(let y=0;y<lv.h;y++) for(let x=0;x<lv.w;x++){
+      const cx=bx+x*cs, cy=oy+y*cs, cell=g[y][x];
+      if(cell===1){
+        ctx.fillStyle='#191928';
+        ctx.fillRect(cx,cy,cs,cs);
+        // subtle inner shadow
+        ctx.fillStyle='#22223a';
+        ctx.fillRect(cx+1,cy+1,cs-2,1);
+        ctx.fillRect(cx+1,cy+1,1,cs-2);
+      }else{
+        ctx.fillStyle='#0f0f18';
+        ctx.fillRect(cx,cy,cs,cs);
+        ctx.strokeStyle='#161622';
+        ctx.lineWidth=0.5;
+        ctx.strokeRect(cx,cy,cs,cs);
+      }
+      // Goal
+      if(x===gp.x&&y===gp.y){
+        const c=mi===0?'#4fc3f7':'#f06292';
+        ctx.fillStyle=c+'33';
+        ctx.beginPath(); ctx.arc(cx+cs/2,cy+cs/2,cs*0.35,0,Math.PI*2); ctx.fill();
+        ctx.strokeStyle=c; ctx.lineWidth=1.5;
+        ctx.beginPath(); ctx.arc(cx+cs/2,cy+cs/2,cs*0.28,0,Math.PI*2); ctx.stroke();
+        ctx.fillStyle=c+99; ctx.font=Math.max(8,cs*0.3)+'px sans-serif';
+        ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.fillText('★',cx+cs/2,cy+cs/2+0.5);
+      }
+      // Ball
+      if(x===bp.x&&y===bp.y){
+        const c1=mi===0?'#80e0ff':'#ff80b0', c2=mi===0?'#4fc3f7':'#f06292', c3=mi===0?'#1a7fba':'#ba1a5e';
+        const grad=ctx.createRadialGradient(cx+cs/2,cy+cs/2,0,cx+cs/2,cy+cs/2,cs*0.4);
+        grad.addColorStop(0,c1); grad.addColorStop(0.6,c2); grad.addColorStop(1,c3);
+        ctx.shadowColor=(mi===0?'#4fc3f766':'#f0629266'); ctx.shadowBlur=cs*0.25;
+        ctx.fillStyle=grad;
+        ctx.beginPath(); ctx.arc(cx+cs/2,cy+cs/2,cs*0.33,0,Math.PI*2); ctx.fill();
+        ctx.shadowBlur=0;
+        ctx.fillStyle='#ffffff44';
+        ctx.beginPath(); ctx.arc(cx+cs*0.33,cy+cs*0.33,cs*0.09,0,Math.PI*2); ctx.fill();
+      }
+    }
+    // Label
+    ctx.font='10px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='top';
+    ctx.fillStyle=mi===0?'#4fc3f766':'#f0629266';
+    ctx.fillText(mi===0?'球 A':'球 B',bx+cw/2,oy+ch+5);
+  }
+}
+
+function roundRect(ctx,x,y,w,h,r){
+  if(r>w/2)r=w/2; if(r>h/2)r=h/2;
+  ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y);
+  ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r);
+  ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h);
+  ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r);
+  ctx.quadraticCurveTo(x,y,x+r,y);
+}
+
+// ===== UI =====
+function uiUpd(){
+  $('lvl-num').textContent=S.lvl+1; $('lvl-total').textContent=LV.length; $('mv-count').textContent=S.moves;
+}
+
+function showMsg(t){const e=$('msg-toast'); e.textContent=t; e.classList.add('show'); clearTimeout(e._t); e._t=setTimeout(()=>e.classList.remove('show'),1500)}
+function hideMsg(){$('msg-toast').classList.remove('show')}
+
+function showWin(){
+  $('win-overlay').classList.add('open');
+  const b=S.best[S.lvl];
+  $('win-stats').textContent=`完成！用了 ${S.moves} 步`+(b?` · 最佳 ${b} 步`:'');
+  $('win-hint').textContent=LV[S.lvl].desc;
+}
+
+function updateBtns(){
+  document.querySelectorAll('.level-btn').forEach(b=>{
+    const i=parseInt(b.dataset.idx); b.className='level-btn';
+    b.innerHTML=`${i+1}`;
+    if(S.done.has(i)){b.classList.add('done');const s=S.best[i];b.innerHTML=`${i+1}<span class="sub">${s}步</span>`}
+    if(i===S.lvl)b.classList.add('now');
+  });
+}
+
+function buildLvlSelect(){
+  const g=$('lvl-grid'); g.innerHTML='';
+  LV.forEach((_,i)=>{
+    const b=document.createElement('button');
+    b.className='level-btn'; b.dataset.idx=i;
+    b.addEventListener('click',()=>{loadLevel(i);$('level-select').classList.remove('open')});
+    g.appendChild(b);
+  });
+  updateBtns();
+}
+
+
+// ===== SHARE / RANKING SYSTEM =====
+const FRIEND_KEY = 'split_friend_best';
+function loadFriend() {
+  try { return JSON.parse(localStorage.getItem(FRIEND_KEY)) || {}; } catch(e) { return {}; }
+}
+function saveFriend(d) { localStorage.setItem(FRIEND_KEY, JSON.stringify(d)); }
+
+function encodeShare() {
+  const parts = [];
+  for (let i = 0; i < LV.length; i++) {
+    const s = S.best[i];
+    parts.push(s !== undefined ? s.toString(16).padStart(2,'0') : 'ff');
+  }
+  return 's2' + LV.length.toString(16).padStart(2,'0') + parts.join('');
+}
+function decodeShare(code) {
+  try {
+    if (!code.startsWith('s2')) return null;
+    const cnt = parseInt(code.slice(2,4), 16);
+    const data = {};
+    for (let i = 0; i < cnt; i++) {
+      const h = code.slice(4 + i*2, 6 + i*2);
+      if (h.length < 2) return null;
+      const v = parseInt(h, 16);
+      if (v !== 255) data[i] = v;
+    }
+    return data;
+  } catch(e) { return null; }
+}
+
+function copyShare() {
+  const code = encodeShare();
+  navigator.clipboard.writeText(code).then(() => {
+    const btn = document.getElementById('btn-copy-code');
+    btn.textContent = '已复制!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = '复制分享码'; btn.classList.remove('copied'); }, 2000);
+  }).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = code; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select(); document.execCommand('copy');
+    document.body.removeChild(ta);
+    showMsg('分享码已复制');
+  });
+}
+
+function importShare(code) {
+  const data = decodeShare(code.trim());
+  if (!data) {
+    document.getElementById('import-result').textContent = '无效的分享码，请检查后重试';
+    document.getElementById('import-result').className = 'err';
+    return;
+  }
+  const cur = loadFriend();
+  for (const [k, v] of Object.entries(data)) {
+    const idx = parseInt(k);
+    if (cur[idx] === undefined || v < cur[idx]) cur[idx] = v;
+  }
+  saveFriend(cur);
+  document.getElementById('import-result').textContent = '导入成功！共 ' + Object.keys(data).length + ' 关记录';
+  document.getElementById('import-result').className = 'ok';
+  const activeTab = document.querySelector('.rank-tab.active');
+  renderRanking(activeTab ? activeTab.dataset.tab : 'self');
+}
+
+function renderRanking(tab) {
+  const isSelf = tab === 'self';
+  const data = isSelf ? S.best : loadFriend();
+  const tbody = document.getElementById('rank-body');
+  tbody.innerHTML = '';
+  const keys = Object.keys(data).map(Number).sort((a,b)=>a-b);
+  if (keys.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#444;padding:30px 0">暂无记录</td></tr>';
+    return;
+  }
+  for (const i of keys) {
+    const tr = document.createElement('tr');
+    const own = S.best[i];
+    const other = data[i];
+    let cls = '';
+    if (!isSelf && own !== undefined) {
+      cls = other < own ? 'beat' : (other === own ? 'tie' : 'slower');
+    }
+    tr.innerHTML =
+      '<td>' + (i+1) + '</td>' +
+      '<td class="name-col">' + LV[i].desc.slice(0,8) + '</td>' +
+      '<td class="r-num">' + (isSelf ? other : own !== undefined ? own : '-') + '</td>' +
+      '<td class="r-num ' + cls + '">' + other + '</td>';
+    tbody.appendChild(tr);
+  }
+}
+
+
+// ===== KEYBOARD =====
+document.addEventListener('keydown',e=>{
+  const m={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right',w:'up',s:'down',a:'left',d:'right'};
+  if(m[e.key]){e.preventDefault();move(m[e.key])}
+  if((e.key==='z'||e.key==='Z')&&(e.ctrlKey||e.metaKey)){e.preventDefault();undo()}
+  if(e.key==='Escape'){$('level-select').classList.remove('open');$('win-overlay').classList.remove('open');$('rank-overlay').classList.remove('open');$('import-overlay').classList.remove('open')}
+});
+
+// ===== HINT =====
+function showHint(){
+  if(S.won) return;
+  const sol=SOLS[S.lvl];
+  const legend={'↑':'上','↓':'下','←':'左','→':'右'};
+  const steps=sol.split('').map(c=>legend[c]||c).join(' ');
+  showMsg(`参考解法: ${steps} (共${sol.length}步)`);
+}
+
+// ===== INIT =====
+canvas=$('gc'); ctx=canvas.getContext('2d');
+buildLvlSelect(); loadLevel(0);
+
+window.addEventListener('resize',()=>{resize();render()});
+$('btn-hint').addEventListener('click',showHint);
+$('btn-undo').addEventListener('click',undo);
+$('btn-reset').addEventListener('click',resetLv);
+$('btn-levels').addEventListener('click',()=>{updateBtns();$('level-select').classList.add('open')});
+$('cls-lvl').addEventListener('click',()=>$('level-select').classList.remove('open'));
+$('btn-next').addEventListener('click',()=>{
+  $('win-overlay').classList.remove('open');
+  if(S.lvl<LV.length-1)loadLevel(S.lvl+1); else showMsg('已通过全部关卡！');
+});
+$('btn-copy-code').addEventListener('click',copyShare);
+  $('btn-list').addEventListener('click',()=>{$('win-overlay').classList.remove('open');updateBtns();$('level-select').classList.add('open')});
+$('btn-rank').addEventListener('click',()=>{
+  renderRanking('self');
+  document.querySelectorAll('.rank-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelector('.rank-tab[data-tab="self"]').classList.add('active');
+  $('rank-overlay').classList.add('open');
+});
+$('cls-rank').addEventListener('click',()=>$('rank-overlay').classList.remove('open'));
+document.querySelectorAll('.rank-tab').forEach(tab=>{
+  tab.addEventListener('click',()=>{
+    document.querySelectorAll('.rank-tab').forEach(t=>t.classList.remove('active'));
+    tab.classList.add('active');
+    renderRanking(tab.dataset.tab);
+  });
+});
+$('btn-import-rank').addEventListener('click',()=>{
+  $('import-overlay').classList.add('open');
+  $('import-code').value='';
+  $('import-result').textContent='';
+  $('import-result').className='';
+});
+$('btn-cancel-import').addEventListener('click',()=>$('import-overlay').classList.remove('open'));
+$('btn-do-import').addEventListener('click',()=>{importShare($('import-code').value);});
+$('btn-clear-friend').addEventListener('click',()=>{
+  if(confirm('确认清除朋友记录？')) {
+    saveFriend({}); const act=document.querySelector('.rank-tab.active');
+    renderRanking(act?act.dataset.tab:'self'); showMsg('朋友数据已清除');
+  }
+});
+// Close import overlay on backdrop click
+$('import-overlay').addEventListener('click',e=>{if(e.target===e.currentTarget)$('import-overlay').classList.remove('open')});
+
+
+// ===== CANVAS CLICK =====
+canvas.addEventListener('click',e=>{
+  const r=canvas.getBoundingClientRect();
+  const x=(e.clientX-r.left)*(canvas.width/r.width);
+  const y=(e.clientY-r.top)*(canvas.height/r.height);
+  const m=50;
+  if(x<m)move('left');else if(x>canvas.width-m)move('right');
+  else if(y<m)move('up');else if(y>canvas.height-m)move('down');
+});
+
+// Touch swipe
+let tx=null;
+canvas.addEventListener('touchstart',e=>{tx={x:e.touches[0].clientX,y:e.touches[0].clientY}},{passive:true});
+canvas.addEventListener('touchend',e=>{
+  if(!tx)return;
+  const t=e.changedTouches[0],dx=t.clientX-tx.x,dy=t.clientY-tx.y;
+  if(Math.max(Math.abs(dx),Math.abs(dy))<25)return;
+  move(Math.abs(dx)>Math.abs(dy)?(dx>0?'right':'left'):(dy>0?'down':'up'));
+  tx=null;
+},{passive:true});
+
+// ===== AUDIO SYSTEM =====
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx = null;
+function initAudio() { if (!audioCtx) audioCtx = new AudioCtx(); }
+function playTone(freq, dur, type, vol) {
+  try { initAudio(); const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+    o.type=type||'sine'; o.frequency.value=freq;
+    g.gain.setValueAtTime(vol||0.12,audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+dur);
+    o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime+dur);
+  }catch(e){}
+}
+function playMoveSnd() { playTone(520,0.05,'square',0.06); }
+function playBlockedSnd() { playTone(160,0.1,'sawtooth',0.04); }
+function playWinSnd() { [523,659,784,1047].forEach((f,i)=>setTimeout(()=>playTone(f,0.2,'sine',0.1),i*100)); }
+function playUndoSnd() { playTone(350,0.04,'triangle',0.05); }
+function playSelectSnd() { playTone(440,0.06,'triangle',0.05); }
+let _bgmId = null;
+function toggleBgm() {
+  if (_bgmId) { clearTimeout(_bgmId); _bgmId=null; return; }
+  initAudio();
+  function playBgm() {
+    try {
+      const now=audioCtx.currentTime;
+      const chords=[[262,330,392],[294,370,440],[330,392,494],[349,440,523]];
+      chords.forEach((ch,i)=>{
+        ch.forEach(f=>{
+          const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+          o.type='sine'; o.frequency.value=f;
+          g.gain.setValueAtTime(0.02,now+i*2);
+          g.gain.exponentialRampToValueAtTime(0.001,now+i*2+1.8);
+          o.connect(g); g.connect(audioCtx.destination);
+          o.start(now+i*2); o.stop(now+i*2+1.8);
+        });
+      });
+      _bgmId = setTimeout(playBgm, 8000);
+    }catch(e){}
+  }
+  playBgm();
+}
+</script>
+</body>
+</html>

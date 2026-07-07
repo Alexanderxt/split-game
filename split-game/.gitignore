@@ -1,0 +1,12 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Xcode
+xcode_project/SplitGame/SplitGame.xcodeproj/xcuserdata/
+xcode_project/SplitGame/SplitGame.xcodeproj/project.xcworkspace/
+xcode_project/SplitGame/DerivedData/
+
+# Python
+*.pyc
+__pycache__/
